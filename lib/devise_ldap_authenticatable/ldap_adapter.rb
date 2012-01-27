@@ -71,6 +71,7 @@ module Devise
         @ldap_auth_username_builder = params[:ldap_auth_username_builder]
         
         @group_base = ldap_config["group_base"]
+        @group_attribute = ldap_config.fetch("group_attribute", "uniqueMember")
         @required_groups = ldap_config["required_groups"]        
         @required_attributes = ldap_config["require_attribute"]
         
@@ -141,7 +142,7 @@ module Devise
           if group.is_a?(Array)
             group_attribute, group_name = group
           else
-            group_attribute = "uniqueMember"
+            group_attribute = @group_attribute
             group_name = group
           end
           unless ::Devise.ldap_ad_group_check
@@ -189,7 +190,7 @@ module Devise
         admin_ldap = LdapConnect.admin
 
         DeviseLdapAuthenticatable::Logger.send("Getting groups for #{dn}")
-        filter = Net::LDAP::Filter.eq("uniqueMember", dn)
+        filter = Net::LDAP::Filter.eq(@group_attribute, dn)
         admin_ldap.search(:filter => filter, :base => @group_base).collect(&:dn)
       end
 
